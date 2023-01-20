@@ -1,0 +1,108 @@
+/*import the Scientific Calculator font*/
+@import url('https://fonts.cdnfonts.com/css/scientific-calculator-lcd');
+
+body{
+	font-family: 'Scientific Calculator LCD', sans-serif;
+}
+
+.form-control{
+	border: none;
+	background-color: rgb(241 243 244);
+}
+
+.form-group{
+	overflow: auto;
+}
+
+.input-text{
+	text-align: right;
+	font-size: 40px;
+}
+/*.header {
+    margin-left: 490px;
+    background-color: rgb(241 243 244);
+    padding: 30px;
+    width: 23%;
+}*/
+
+.content{
+ 	background-color: rgb(241 243 244);
+}
+
+.deg{
+	border: none;
+}
+
+table, thead, th, td, input, tbody{
+	border: none;
+}
+
+.btn-op{
+	font-size: 12px;
+}
+
+span{
+	font-size: 14px;
+	font-weight: normal;
+
+}
+
+.function-icon{
+	height: 22px;
+	width: 22px;
+}
+
+.down-arrow-icon{
+	height: 12px;
+	width: 12px;
+}
+
+.sup-text{
+    vertical-align: sup;
+	font-size: 9px;
+}
+
+.delete-icon{
+	width: 22px;
+	height: 22px;
+}
+
+.sc-col-4-btn, .sc-col-5-btn{
+	font-size: 14px;
+	font-weight: normal;
+	width: 66px;
+/*	#e9ecef*/
+	box-shadow: 10px 12px 21px 10px #e9ecef;
+}
+
+.sc-col-3-btn{
+	font-size: 15px;
+	font-weight: normal;
+	width: 66px;
+}
+
+button{
+	border: none;
+	outline: none;
+	padding: 30px;
+	font-weight: normal;
+	align-items: center;
+}
+
+.fa-square-root-variable{
+	font-size: 16px;
+	font-weight: none;	
+}
+
+
+.btn-b{
+	border: none;
+}
+
+.dropdown-menu{
+	background-color: rgb(241 243 244);
+}
+
+.dropdown-item:active{
+	background-color: rgb(241 243 244);
+}
