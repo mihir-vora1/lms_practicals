@@ -1,0 +1,257 @@
+/*
+	
+	MongoDB Task
+
+*/
+
+// create database name mongo_db_task
+use mongo_db_task
+
+// create collections in mongo_db_task
+db.createCollection('empDetails')
+
+// show the number of collection in mongo_db_task
+show collections()
+
+// QUE - 1) Batch Create with minimum 100 records in MongoDb (create batch).
+
+// Insert 100 records, but over here, write only 6 for proper visibility
+
+// Query
+db.empDetails.insertMany([
+	{"emp_id":1,"emp_firstName":"Joel","emp_lastName":"Trevallion","emp_email":"jtrevallion0@symantec.com","emp_gender":"Male","emp_address":"178-bgw-189","emp_salary":61566.46},
+	{"emp_id":2,"emp_firstName":"Hartwell","emp_lastName":"Martynikhin","emp_email":"hmartynikhin1@cdc.gov","emp_gender":"Male","emp_address":"794-tdy-010","emp_salary":55813.792},
+	{"emp_id":3,"emp_firstName":"Temp","emp_lastName":"Blackham","emp_email":"tblackham2@webs.com","emp_gender":"Male","emp_address":"661-hib-132","emp_salary":11592.704},
+	{"emp_id":4,"emp_firstName":"Tudor","emp_lastName":"Brumen","emp_email":"tbrumen3@techcrunch.com","emp_gender":"Genderfluid","emp_address":"701-ube-862","emp_salary":73218.089},
+	{"emp_id":5,"emp_firstName":"Ray","emp_lastName":"Rudeyeard","emp_email":"rrudeyeard4@washington.edu","emp_gender":"Male","emp_address":"163-vsf-489","emp_salary":28490.747},
+	{"emp_id":6,"emp_firstName":"Nissie","emp_lastName":"Lewsey","emp_email":"nlewsey5@unicef.org","emp_gender":"Female","emp_address":"699-ciw-504","emp_salary":62275.199}
+])
+
+
+// display the document
+db.empDetails.find()
+/*
+
+{
+	"_id" : ObjectId("63dcd81fc50412b6267cb831"),
+	"emp_id" : 1,
+	"emp_firstName" : "Joel",
+	"emp_lastName" : "Trevallion",
+	"emp_email" : "jtrevallion0@symantec.com",
+	"emp_gender" : "Male",
+	"emp_address" : "178-bgw-189",
+	"emp_salary" : 61566.46
+}
+{
+	"_id" : ObjectId("63dcd81fc50412b6267cb832"),
+	"emp_id" : 2,
+	"emp_firstName" : "Hartwell",
+	"emp_lastName" : "Martynikhin",
+	"emp_email" : "hmartynikhin1@cdc.gov",
+	"emp_gender" : "Male",
+	"emp_address" : "794-tdy-010",
+	"emp_salary" : 55813.792
+}
+{
+	"_id" : ObjectId("63dcd81fc50412b6267cb833"),
+	"emp_id" : 3,
+	"emp_firstName" : "Temp",
+	"emp_lastName" : "Blackham",
+	"emp_email" : "tblackham2@webs.com",
+	"emp_gender" : "Male",
+	"emp_address" : "661-hib-132",
+	"emp_salary" : 11592.704
+}
+{
+	"_id" : ObjectId("63dcd81fc50412b6267cb834"),
+	"emp_id" : 4,
+	"emp_firstName" : "Tudor",
+	"emp_lastName" : "Brumen",
+	"emp_email" : "tbrumen3@techcrunch.com",
+	"emp_gender" : "Genderfluid",
+	"emp_address" : "701-ube-862",
+	"emp_salary" : 73218.089
+}
+{
+	"_id" : ObjectId("63dcd81fc50412b6267cb835"),
+	"emp_id" : 5,
+	"emp_firstName" : "Ray",
+	"emp_lastName" : "Rudeyeard",
+	"emp_email" : "rrudeyeard4@washington.edu",
+	"emp_gender" : "Male",
+	"emp_address" : "163-vsf-489",
+	"emp_salary" : 28490.747
+}
+{
+	"_id" : ObjectId("63dcd81fc50412b6267cb836"),
+	"emp_id" : 6,
+	"emp_firstName" : "Nissie",
+	"emp_lastName" : "Lewsey",
+	"emp_email" : "nlewsey5@unicef.org",
+	"emp_gender" : "Female",
+	"emp_address" : "699-ciw-504",
+	"emp_salary" : 62275.199
+}
+
+*/
+
+// QUE -  2) Batch Update with minimum 100 records  in MongoDB (update batch).
+// Query:
+	db.empDetails.update({}, {"$mul" : {"emp_salary" : 66}}, {"multi": true})
+/*
+{
+	"_id" : ObjectId("63dcd81fc50412b6267cb831"),
+	"emp_id" : 1,
+	"emp_firstName" : "Joel",
+	"emp_lastName" : "Trevallion",
+	"emp_email" : "jtrevallion0@symantec.com",
+	"emp_gender" : "Male",
+	"emp_address" : "178-bgw-189",
+	"emp_salary" : 4063386.36
+}
+{
+	"_id" : ObjectId("63dcd81fc50412b6267cb832"),
+	"emp_id" : 2,
+	"emp_firstName" : "Hartwell",
+	"emp_lastName" : "Martynikhin",
+	"emp_email" : "hmartynikhin1@cdc.gov",
+	"emp_gender" : "Male",
+	"emp_address" : "794-tdy-010",
+	"emp_salary" : 3683710.272
+}
+{
+	"_id" : ObjectId("63dcd81fc50412b6267cb833"),
+	"emp_id" : 3,
+	"emp_firstName" : "Temp",
+	"emp_lastName" : "Blackham",
+	"emp_email" : "tblackham2@webs.com",
+	"emp_gender" : "Male",
+	"emp_address" : "661-hib-132",
+	"emp_salary" : 765118.464
+}
+{
+	"_id" : ObjectId("63dcd81fc50412b6267cb834"),
+	"emp_id" : 4,
+	"emp_firstName" : "Tudor",
+	"emp_lastName" : "Brumen",
+	"emp_email" : "tbrumen3@techcrunch.com",
+	"emp_gender" : "Genderfluid",
+	"emp_address" : "701-ube-862",
+	"emp_salary" : 4832393.874000001
+}
+{
+	"_id" : ObjectId("63dcd81fc50412b6267cb835"),
+	"emp_id" : 5,
+	"emp_firstName" : "Ray",
+	"emp_lastName" : "Rudeyeard",
+	"emp_email" : "rrudeyeard4@washington.edu",
+	"emp_gender" : "Male",
+	"emp_address" : "163-vsf-489",
+	"emp_salary" : 1880389.302
+}
+{
+	"_id" : ObjectId("63dcd81fc50412b6267cb836"),
+	"emp_id" : 6,
+	"emp_firstName" : "Nissie",
+	"emp_lastName" : "Lewsey",
+	"emp_email" : "nlewsey5@unicef.org",
+	"emp_gender" : "Female",
+	"emp_address" : "699-ciw-504",
+	"emp_salary" : 4110163.134
+}
+*/
+
+// QUE - 3) Perform indexing on particular 3 fields in MongoDB.
+
+// by default index are created by mongoDB
+
+
+
+// Query
+db.empDetails.createIndex({"emp_id": 1})
+db.empDetails.createIndex({"emp_firstName": 1})
+db.empDetails.createIndex({"emp_gender": 1})
+
+
+show the number of index in this collections
+// Query
+	db.empDetails.getIndexes()
+
+/*
+[
+	{
+		"v" : 2,
+		"key" : {
+			"_id" : 1
+		},
+		"name" : "_id_"
+	},
+	{
+		"v" : 2,
+		"key" : {
+			"emp_id" : 1
+		},
+		"name" : "emp_id_1"
+	},
+	{
+		"v" : 2,
+		"key" : {
+			"emp_firstName" : 1
+		},
+		"name" : "emp_firstName_1"
+	},
+	{
+		"v" : 2,
+		"key" : {
+			"emp_gender" : 1
+		},
+		"name" : "emp_gender_1"
+	}
+]
+*/
+
+
+// search the record using index
+// Query:
+	db.empDetails.find({"emp_gender" : "male"}).explain('executionStats')
+
+// total document the lock is [totalDocsExamined : 42] only not all document
+
+/*
+"executionStats" : {
+		"executionSuccess" : true,
+		"nReturned" : 42,
+		"executionTimeMillis" : 2,
+		"totalKeysExamined" : 42,
+		"totalDocsExamined" : 42,
+*/
+
+
+// QUE -  4) Find duplicates using aggregation in MongoDB
+// Query:
+	db.empDetails.aggregate([
+					{"$group" : 
+						{ "_id": "$emp_gender", 
+						  "count": 
+						  	{ "$sum": 1 } 
+						  } 
+					},
+					{"$match" : 
+						{
+							"count" : { "$gt" : 1  } 
+						}
+					}
+				])
+/*
+{ "_id" : "Male", "count" : 42 }
+{ "_id" : "Female", "count" : 47 }
+{ "_id" : "Genderfluid", "count" : 3 }
+{ "_id" : "Genderqueer", "count" : 2 }
+{ "_id" : "Polygender", "count" : 3 }
+*/ 
+
+
+
+
+
+
