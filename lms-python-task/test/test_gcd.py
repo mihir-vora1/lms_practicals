@@ -1,7 +1,6 @@
 import unittest
 from gcd import GCD
 
-
 class TestGCD(unittest.TestCase):
     def test_valid_input(self):
         # Test Case 1

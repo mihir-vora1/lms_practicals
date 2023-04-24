@@ -25,7 +25,7 @@ class GenerateWellFormedParentheses:
         result = ["()"]
 
         # Iterate from 2 to num+1
-        for _ in range(2, num + 1):
+        for i in range(2, num + 1):
             # create new empty set to store the unique results
             new_result = set()
             # Iterate over the each string of the result input string
