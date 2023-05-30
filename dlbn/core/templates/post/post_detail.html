@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+    <div class="row d-flex justify-content-center">
+        <div class="col-md-9 ">
+            <main class="wrapper">
+                <section class="meta">
+                    <p class="title">
+                        {{ post.title }}
+                    </p>
+                    <p class="subtitle">
+                        {% if post.description %}
+                            <p>{{ post.description }}</p>
+                        {% endif %}
+                    </p>
+                    
+                    <div class="author">
+                        <!-- about -->
+                        <div class="about">
+                            <img src="/media/default.jpg" alt="Profile Image" height="60" width="60" />
+                            <div>
+                                <p class="author_name">{{ post.user.username }}</p>
+                                <p class="post_date_readtime">{{ post.created_at }}</p>
+                            </div>
+                        </div>
+                        <!-- social -->
+                        <div class="social">
+                            <a href="#">
+                                <a href="{% url 'edit_post' post_id=post.pk %}">
+                                    <i class="fa-solid fa-pen m-4"></i>
+                                </a>
+                            </a>
+                            <a href="#">
+                                <a href="{% url 'delete_post' post_id=post.pk %}">
+                                    <i class="fa-solid fa-trash m-4"></i>
+                                </a>
+                            </a>
+                        </div>
+                    </div>
+                </section>
+                <div class="thumbnail-image">
+                        {% if post.thumbnail_image %}
+                            <img src="{{ post.thumbnail_image.url }}" alt="thumbnail image" width="700" height="356" loading="lazy">
+                        {% endif %}
+                    </div>
+                <section class="content">
+                    {{ post.body|safe }}
+                   <div class="col-sm-5 order-1 order-sm-2">    
+                        <ul class="list-inline mt-3">
+                            {% for tag in post.tags.all %}
+                            <li class="list-inline-item mt-1">
+                                <a href="{% url 'tag_posts' %}?tag={{ tag.name }}" class="btn btn-sm btn-outline-secondary hover-dark ">{{ tag }}</a>
+                            </li>
+                            {% endfor %}
+                            {% for categorie in post.categories.all %}
+                            <li class="list-inline-item mt-1">
+                                <a href="{% url 'category_post' %}?category={{ categorie.name }}" class="btn btn-sm btn-outline-secondary hover-dark ">{{ categorie }}</a>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+{% endblock %}

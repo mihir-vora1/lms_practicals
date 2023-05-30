@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+  <body>
+    <!-- articles section start -->
+    <div class="container mt-5">
+        <div class="row">
+            <!-- left side start -->
+            <div class="col-sm-7 col-7 order-2 order-sm-1 ml-5 ml-sm-0">
+            {% for post in posts %}
+            <a href="{% url 'post_detail' post_id=post.pk %}" class="text-decoration-none">
+                    <div class="row  mt-3 mt-sm-2">
+                        <div class="col-sm-8 col-8">
+                            <div class="row ">
+                                <div class="col-sm-1 col-1 mt-1">
+                                    <img
+                                    src="/media/default.jpg"
+                                    class="rounded"
+                                    alt="Profile Image"
+                                    srcset=""
+                                    width="30"
+                                    />
+                                </div>
+                                <div class="col-sm-5 col-6 pl-4  pt-sm-1 pl-sm-3">
+                                    <p><strong>{{ post.user.username }}</strong></p>
+                                </div>
+                            </div>
+                            <div class="mt-1">
+                                <h5><strong>{{ post.title }}</strong></h5>
+                            </div>
+                            <div>
+                                <h6 class='text-secondary d-none d-sm-block'>
+                                {{ post.description }}
+                                </h6>
+                            </div>
+                            <div class="row text-black-50 mt-2 pt-1 ">
+                                <ul class="list-inline small col-sm-10 d-none d-sm-block">
+                                    <li class="list-inline-item">{{ post.created_at }}</li>
+                                    <li class="list-inline-item">&#8226</li>
+                                    <li class="list-inline-item">3 Min Read</li>
+                                </ul>
+                                <div class="col-sm-2 pl-4 d-none d-sm-block">
+                                    <i class="far fa-bookmark fa-lg"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-3 col-2 ">
+                            {% if post.thumbnail_image %}
+                                <img src="{{post.thumbnail_image.url}}" alt="thmbnail image"  width="200" height="160">
+                            {% endif %}
+                        </div>
+                    </div>
+                </a>
+               <h6 class="ml-8 text-success p-1 pb-4 border-bottom "></h6>
+              {% endfor %}
+            </div>
+            <!-- left side end -->
+
+             <!-- right side start-->
+            <div class="col-sm-5 order-1 order-sm-2">
+                <h6 class="ml-5"> <small><strong>Related Topics</strong></small>
+                </h6>
+
+                    <ul class="list-inline ml-5 mt-3">
+                        {% for tag in tags %}
+                        <li class="list-inline-item mt-1">
+                            <a href="{% url 'tag_posts' %}?tag={{ tag.name }}" class="btn btn-sm btn-outline-secondary hover-dark ">{{ tag.name }}</a>
+                        </li>
+                         {% endfor %}
+                    </ul>
+                  {% comment %} <div>
+                    <h6 class="ml-5 text-success p-1 pb-4 border-bottom "> <small>See all topics.</small>
+                    </h6>
+                  </div> {% endcomment %}
+            </div>
+             <!-- right side end -->
+        </div>
+    </div>
+     <!-- articles section end-->
+    
+
+  </body>
+</html>
+{% endblock %}

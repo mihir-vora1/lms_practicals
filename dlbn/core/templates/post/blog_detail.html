@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Blog Details{% endblock title %}
+
+{% block content %}
+<dev class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="col-md-12">
+                <ul class="list-group">
+                    {% for blogs in all_blogs %}
+                        <li class="list-group-item">
+                            <div>
+                                {{ blogs.user.username }}
+                            </div>
+                            {{blogs.title}}
+                            {% if blogs.thumbnail_image %}
+                                <img src="{{blogs.thumbnail_image.url}}" alt="thmbnail image"  width="250" height="250">
+                            {% endif %}
+                            {{blogs.body | safe}}
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</dev>
+
+{% endblock content %}
