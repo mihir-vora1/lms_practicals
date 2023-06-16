@@ -126,15 +126,21 @@ label{
         <div class="container h-50">
 
             <div class="container-fluid">
-                {% if messages %}
-                    <ul class="messages">
-                        {% for message in messages %}
-                            <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-                        {% endfor %}
-                    </ul>
-                {% endif %}
+
             <div class="row justify-content-md-center h-100">
+
                 <div class="card-wrapper">
+
+                    {% if messages %}
+                    <div class="card border mt-4 pb-4">
+                        {% for message in messages %}
+                            <div class="mt-4 text-center font-weight-bold">
+                                   <p{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</p>
+                            </div>
+                        {% endfor  %}
+                    </div>
+                    {% endif %}
+
                   <!--   <div class="brand">
                         <img src="img/logo.jpg" alt="logo">
                     </div> -->

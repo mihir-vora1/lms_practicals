@@ -10,8 +10,8 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 import os
-from dotenv import load_dotenv
 from pathlib import Path
+from dotenv import load_dotenv
 from datetime import timedelta
 from django.contrib.messages import constants as messages
 
@@ -48,6 +48,7 @@ INSTALLED_APPS = [
 
     "user",
     "post",
+    'membership',
     "crispy_forms",
     "crispy_bootstrap5",
     'rest_framework',
@@ -56,6 +57,9 @@ INSTALLED_APPS = [
     'django_celery_results',
     'django_celery_beat',
 ]
+
+MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
+
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 
@@ -105,11 +109,14 @@ WSGI_APPLICATION = "core.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": "django.db.backends.postgresql_psycopg2",
+        "NAME": "dlbn",
+        "USER": "postgres",
+        "PASSWORD": "Python@123",
+        "HOST": "localhost",
+        "PORT": "5432",
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -274,7 +281,10 @@ EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')
 
-
+# Stripe API keys
+STRIPE_SECRET_KEY = os.getenv('STRIP_SECRET_KEY')
+STRIPE_PUBLIC_KEY = os.getenv('STRIP_PUBLISHABLE_KEY')
+ENDPOINT_SECRET = os.getenv('ENDPOINT_SECRET')
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=24),

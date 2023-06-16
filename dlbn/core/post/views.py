@@ -1,39 +1,40 @@
-from django.shortcuts import render, get_object_or_404, redirect
+from django.http import Http404
+from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
+from django.utils import timezone
+
 from .models import (
-                        Posts, 
-                        Tag,  
-                        Categorie, 
-                        Preference, 
-                        Comment, 
-                        CreateBookmarkList, 
-                        Posts, 
-                        Bookmark
-                    )
-from user.models import User, Follow
-from .forms import CreateBlogForm
-from rest_framework import generics, permissions, filters
-from rest_framework.response import Response
-from rest_framework import status
-from django.contrib.auth.models import User
+    Tag,
+    Categorie,
+    Preference,
+    Comment,
+    CreateBookmarkList,
+    Posts,
+    Bookmark,
+)
 from .serializers import (
-                            CategoriesSerializer, 
-                            TagSerializer, 
-                            PreferenceSerializer, 
-                            UserPreferenceSerializerTest, 
-                            ArticleSerializer, 
-                            CommentSerializer, 
-                            CreateBookmarkListSerializer,
-BookmarkSerializer
-                        )
+    CategoriesSerializer,
+    TagSerializer,
+    PreferenceSerializer,
+    UserPreferenceSerializerTest,
+    ArticleSerializer,
+    CommentSerializer,
+    CreateBookmarkListSerializer,
+    BookmarkSerializer,
+)
+from .forms import CreateBlogForm
+from user.models import User, Follow
+
+from rest_framework import filters, serializers, generics, status
+from rest_framework.response import Response
 from django.db.models import Q
-from rest_framework import serializers
-from rest_framework.exceptions import NotFound
+from rest_framework.exceptions import NotFound, PermissionDenied
+from rest_framework.permissions import IsAuthenticated
+from django.contrib import messages
+from membership.models import Restrict, Plan, Subscription
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.exceptions import PermissionDenied
-from django.db.models import Prefetch
-from rest_framework import generics, status
-from rest_framework.exceptions import PermissionDenied
+from django.shortcuts import get_object_or_404
+from rest_framework import permissions
 
 
 @login_required
@@ -47,11 +48,11 @@ def home(request):
         categories = user.preference.categories.all()
 
         # Filter posts based on following users OR preferred categories and order by created_at in descending order
-        posts = Posts.objects.filter(Q(user__in=following_users) | Q(categories__in=categories)).order_by('-updated_at').distinct()
+        posts = Posts.objects.filter(Q(user__in=following_users) | Q(categories__in=categories) | Q(user=user)).order_by('-updated_at').distinct()
     except ObjectDoesNotExist:
         # Handle the case when the user does not have a preference
         following_users = Follow.objects.filter(follower=user).values_list('following', flat=True)
-        posts = Posts.objects.filter(user__in=following_users).order_by('-updated_at').distinct()
+        posts = Posts.objects.filter(Q(user__in=following_users) | Q(user=user)).order_by('-updated_at').distinct()
 
     category_lists = Categorie.objects.all()
     first_tag = Tag.objects.first()
@@ -71,35 +72,28 @@ def create_article(request):
             post = form.save(commit=False)
             post.user = request.user
             post.save(user=request.user)
+
+            # Get the article_tags value from the form
+            article_tags = form.cleaned_data.get('article_tags')
+
+            # Split the article_tags value by comma (or any other separator you are using)
+            tag_names = article_tags.split(',')
+
+            # Create Tag objects and associate them with the post
+            for tag_name in tag_names:
+                tag, _ = Tag.objects.get_or_create(user=request.user, categories=post.categories, name=tag_name.strip())
+                post.tags.add(tag)
+
             form.save_m2m()
+            messages.success(request, 'Post created successfully.')
             return redirect('home')
     else:
         form = CreateBlogForm()
-        context = {
-            'form':form
-        }
 
+    context = {
+        'form': form
+    }
     return render(request, 'post/create_blog.html', context)
-
-# @login_required
-# def create_blog_post(request):
-#     if request.method == 'POST':
-#         form = CreateBlogForm(request.POST, request.FILES)
-#         if form.is_valid():
-#             post = form.save(commit=False)
-#             post.user = request.user  # Assign the user to the post
-#             post.save()
-#             form.save_m2m()
-#             return redirect('home')
-#     else:
-#         form = CreateBlogForm()
-#
-#     context = {
-#         'form': form
-#     }
-#
-#     return render(request, 'post/create_blog.html', context)
-
 
 @login_required
 def blog_detail(request):
@@ -118,20 +112,17 @@ def article_detail(request, post_id):
     tags = Tag.objects.all()
     categories = Categorie.objects.all()
 
-    # tag_category_zip = zip([post.tags.all(), post.categories.all()])
     context = {
         'post' : post,
         "tags" : tags,
         "categories" : categories,
 
-        # "tag_category_zip" : tag_category_zip
     }
 
-    return render(request, 'post/post_detail.html', context)
-from django.contrib import messages
+    return render(request, 'post/article_detail.html', context)
 
 @login_required
-def edit_post(request, post_id):
+def edit_article(request, post_id):
     post = get_object_or_404(Posts, pk=post_id)
     form = CreateBlogForm(request.POST or None, request.FILES or None, instance=post)
 
@@ -139,19 +130,20 @@ def edit_post(request, post_id):
     if form.is_valid():
         form.save()
         messages.success(request, 'Post updated successfully.')
-        return redirect('post_detail', post_id=post_id)
+        return redirect('article_detail', post_id=post_id)
 
     context = {
         'form': form,
         'post': post,
     }
 
-    return render(request, 'post/edit_post.html', context)
+    return render(request, 'post/edit_article.html', context)
 
 @login_required
-def delete_post(request, post_id):
+def delete_article(request, post_id):
     post = get_object_or_404(Posts, pk=post_id)
     post.delete()
+    messages.success(request, 'Post deleted successfully.')
     return redirect("home")
 
 @login_required
@@ -170,7 +162,6 @@ def tag_posts(request):
 
     return render(request, 'post/tag_posts.html', context)
 
-
 @login_required()
 def categories_posts(request):
     category_name = request.GET.get('category')
@@ -185,8 +176,6 @@ def categories_posts(request):
         "tags" : tags
     }
     return render(request, 'post/category_posts.html', context)
-
-from rest_framework.permissions import IsAuthenticated
 
 class CategoriesListAPIView(generics.ListAPIView):
     # queryset = Categorie.objects.all()
@@ -348,34 +337,6 @@ class UserPreferenceAPIView(generics.CreateAPIView, generics.UpdateAPIView):
         self.perform_update(serializer)
         return Response({'message': 'Preferences updated successfully'}, status=status.HTTP_200_OK)
 
-    # def delete(self, request, *args, **kwargs):
-    #     user = request.user
-    #     preference = get_object_or_404(Preference, user=user)
-    #     preference_id = request.data.get('categories')
-    #     deleted_preference_id = preference.categories.filter(id=preference_id).first()
-    #     if deleted_preference_id:
-    #         preference.categories.remove(deleted_preference_id)
-    #         return Response({'message': 'Preference deleted successfully'}, status=status.HTTP_200_OK)
-    #     else:
-    #         return Response({'message': 'No matching preference found for deletion'}, status=status.HTTP_400_BAD_REQUEST)
-
-
-
-    # def delete(self, request, *args, **kwargs):
-    #     user = request.user
-    #     preference = get_object_or_404(Preference, user=user)
-    #     categories = request.data.get('categories', [])
-    #     if not isinstance(categories, list):
-    #         categories = [categories]
-
-    #     deleted_categories = preference.categories.filter(id__in=categories)
-
-    #     if deleted_categories.exists():
-    #         preference.categories.remove(*deleted_categories)
-    #         return Response({'message': 'Selected preferences deleted successfully'}, status=status.HTTP_200_OK)
-    #     else:
-    #         return Response({'message': 'No matching categories found for deletion'}, status=status.HTTP_400_BAD_REQUEST)
-
 class UserPreferenceAPIViewTest(generics.RetrieveUpdateAPIView):
     queryset = Preference.objects.all()
     serializer_class = UserPreferenceSerializerTest
@@ -400,10 +361,12 @@ class ArticleFeedAPIView(generics.ListAPIView):
             categories = list(user.preference.categories.all())  # Convert single Categorie object to a list
 
             # Filter articles based on following users OR preferred categories
-            queryset = Posts.objects.filter(Q(user__in=following_users) | Q(categories__in=categories)).order_by('-updated_at').distinct()
+            queryset = Posts.objects.filter(Q(user__in=following_users) | Q(categories__in=categories) | Q(user=user)).order_by('-updated_at').distinct()
         except ObjectDoesNotExist:
             following_users = Follow.objects.filter(follower=user).values_list('following', flat=True)
-            queryset = Posts.objects.filter(user__in=following_users).distinct()
+            # queryset = Posts.objects.filter(user__in=following_users).distinct()
+            queryset = Posts.objects.filter(Q(user__in=following_users) | Q(user=user)).order_by('-updated_at').distinct()
+
         return queryset
 
     def list(self, request, *args, **kwargs):
@@ -415,14 +378,13 @@ class ArticleFeedAPIView(generics.ListAPIView):
         serialized_data = serializer.data
         for data in serialized_data:
             post_id = data['id']
-            comments = Comment.objects.filter(post_id=post_id, parent_comment=None).distinct()  # Filter main comments only
+            comments = Comment.objects.filter(post_id=post_id, parent_comment=None).order_by('-updated_at').distinct().distinct()
             if comments.exists():
                 comment_serializer = CommentSerializer(comments, many=True)
                 data['comments'] = comment_serializer.data
             else:
                 data['comments'] = "No Comment Found"
         return Response(serialized_data, status=status.HTTP_200_OK)
-
 
 class CommentListCreateAPIView(generics.ListCreateAPIView, generics.UpdateAPIView, generics.DestroyAPIView):
     queryset = Comment.objects.all()
@@ -435,24 +397,6 @@ class CommentListCreateAPIView(generics.ListCreateAPIView, generics.UpdateAPIVie
             post_id = self.kwargs['post_id']
             return Comment.objects.filter(user=user, post_id=post_id, parent_comment=None)
         return Comment.objects.none()
-
-    # def perform_create(self, serializer):
-    #     post_id = self.kwargs['post_id']
-    #     post = get_object_or_404(Posts, id=post_id)
-    #     parent_comment_id = self.kwargs.get('parent_comment_id')
-    #     if parent_comment_id:
-    #         parent_comment = get_object_or_404(Comment, id=parent_comment_id, post=post)
-    #         serializer.save(user=self.request.user, post=post, parent_comment=parent_comment)
-    #     else:
-    #         serializer.save(user=self.request.user, post=post)
-
-    # def post(self, request, *args, **kwargs):
-    #     post_id = self.kwargs['post_id']
-    #     post = get_object_or_404(Posts, id=post_id)
-    #     if post.comments.exists():
-    #         return super().post(request, *args, **kwargs)
-    #     else:
-    #         return Response({"message": "Cannot reply to comments as the post has no comments."}, status=status.HTTP_400_BAD_REQUEST)
 
     def perform_create(self, serializer):
         post_id = self.kwargs['post_id']
@@ -563,19 +507,6 @@ class BookmarkListAPIView(generics.ListCreateAPIView, generics.DestroyAPIView, g
         else:
             return Response({"message": "Bookmark list ID is required."}, status=400)
 
-    # def update(self, request, *args, **kwargs):
-    #     user = request.user
-    #     bookmark_list = self.get_object()
-    #
-    #     if bookmark_list.user == user:
-    #         serializer = self.get_serializer(bookmark_list, data=request.data)
-    #         serializer.is_valid(raise_exception=True)
-    #         serializer.save()
-    #         return Response(serializer.data, status=200)
-    #     else:
-    #         return Response({"message": "You do not have permission to update this bookmark list."}, status=403)
-
-
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
@@ -594,41 +525,6 @@ class BookmarkListAPIView(generics.ListCreateAPIView, generics.DestroyAPIView, g
 
         return Response(serializer.data)
 
-    # def update(self, request, *args, **kwargs):
-    #     user = request.user
-    #     bookmark_list_id = request.data.get("id")
-    #     # bookmark_list_id = self.kwargs.get("pk")
-    #     bookmark_list = get_object_or_404(CreateBookmarkList, pk=bookmark_list_id)
-    #
-    #     if bookmark_list.user == user:
-    #         serializer = self.get_serializer(bookmark_list, data=request.data, partial=True)
-    #         serializer.is_valid(raise_exception=True)
-    #         serializer.save()
-    #         return Response(serializer.data, status=200)
-    #     else:
-    #         return Response({"message": "You do not have permission to update this bookmark list."}, status=403)
-
-    # def update(self, request, *args, **kwargs):
-    #     user = request.user
-    #     bookmark_list_id = self.kwargs.get("pk")
-    #     bookmark_list = get_object_or_404(CreateBookmarkList, pk=bookmark_list_id)
-    #
-    #     if bookmark_list.user == user:
-    #         serializer = self.get_serializer(bookmark_list, data=request.data, partial=True)
-    #         serializer.is_valid(raise_exception=True)
-    #         serializer.save()
-    #         return Response(serializer.data, status=200)
-    #     else:
-    #         return Response({"message": "You do not have permission to update this bookmark list."}, status=403)
-
-    # def put(self, request, *args, **kwargs):
-    #     # Delegate to the `update` method for PUT requests
-    #     return self.update(request, *args, **kwargs)
-    #
-    # def patch(self, request, *args, **kwargs):
-    #     # Delegate to the `update` method for PATCH requests
-    #     return self.update(request, *args, **kwargs)
-
 
 class BookmarkCreateRemoveAPIView(generics.CreateAPIView, generics.DestroyAPIView):
     queryset = Bookmark.objects.all()
@@ -641,11 +537,11 @@ class BookmarkCreateRemoveAPIView(generics.CreateAPIView, generics.DestroyAPIVie
         try:
             if user.is_authenticated:
                 queryset = Bookmark.objects.filter(user=user)
+                data = {}
         except CreateBookmarkList.DoesNotExist:
             raise NotFound("Bookmark not found.")
 
         return queryset
-
 
     def perform_create(self, serializer):
         user = self.request.user
@@ -682,3 +578,113 @@ class BookmarkCreateRemoveAPIView(generics.CreateAPIView, generics.DestroyAPIVie
                 raise PermissionDenied("You do not have permission to delete this bookmark list.")
         else:
             return Response({"message": "Bookmark ID is required."}, status=400)
+
+class CanReadArticles(permissions.BasePermission):
+    message_limit_exceeded = "You have exceeded your article read limit for the current period."
+    message = "You need to subscribe to a plan to access articles."
+    not_plan_user = 3
+
+    def has_permission(self, request, view):
+        user = request.user
+        plan = user.plan
+
+        if not plan:
+            restrict_count = Restrict.objects.filter(user=user).count()
+            return restrict_count < self.not_plan_user
+
+        if plan.article_read_limit == -1:
+            return True  # No restrictions for users with unlimited access
+
+        if request.method == 'GET':
+            restrict_count = Restrict.objects.filter(user=user, plan=plan).count()
+            return restrict_count < plan.article_read_limit
+
+        return True
+
+class ArticleFeedAPIViewRestrict(generics.RetrieveAPIView):
+    serializer_class = ArticleSerializer
+    permission_classes = [CanReadArticles]
+    queryset = Posts.objects.all()
+
+    def is_subscription_expired(self, user):
+        subscription = Subscription.objects.filter(user=user).order_by('-expire_at').first()
+        return subscription and subscription.has_expired()
+
+    def has_exceeded_limit(self, user, plan):
+        if plan.article_read_limit == -1:
+            return False
+
+        restrict = Restrict.objects.filter(user=user, plan=plan)
+        if plan.recurring_freq == 'monthly':
+            start_date = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            end_date = start_date + timezone.timedelta(days=31)  # Assuming 31 days in a month
+            count = restrict.filter(read_date__gte=start_date, read_date__lt=end_date).count()
+            return count >= plan.article_read_limit
+        elif plan.recurring_freq == 'yearly':
+            start_date = timezone.now().replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+            end_date = start_date + timezone.timedelta(days=365)  # Assuming 365 days in a year
+            count = restrict.filter(read_date__gte=start_date, read_date__lt=end_date).count()
+            return count >= plan.article_read_limit
+        return False
+
+    def retrieve(self, request, *args, **kwargs):
+        user = self.request.user
+        plan = user.plan
+
+        if self.is_subscription_expired(user):
+            return Response({"detail": "Your subscription has expired."},
+                            status=status.HTTP_403_FORBIDDEN)
+
+        restrict_count = Restrict.objects.filter(user=user).count()
+
+        if not plan and restrict_count >= self.permission_classes[0].not_plan_user:
+            return Response(
+                {"detail": "You have exceeded your article read limit for the current period."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        if plan and self.has_exceeded_limit(user, plan):
+            return Response({"detail": "You have exceeded your article read limit for the current period."},
+                            status=status.HTTP_403_FORBIDDEN)
+
+        article_id = self.kwargs.get('pk')  # Get the article ID from the URL parameter
+        article = get_object_or_404(Posts, id=article_id)  # Fetch the requested article
+
+        serialized_data = []
+        data = {}
+
+        serializer = self.get_serializer(article)
+        data = serializer.data
+
+        # Iterate over each article and retrieve their comments
+        comments = Comment.objects.filter(post_id=article.id, parent_comment=None).distinct()
+        if comments.exists():
+            comment_serializer = CommentSerializer(comments, many=True)
+            data['comments'] = comment_serializer.data
+        else:
+            data['comments'] = "No Comment Found"
+
+        restrict_count = Restrict.objects.filter(user=user, plan=plan).count()  # Count the articles read by the user
+
+        # Check if the user has exceeded the article read limit
+        if restrict_count >= (plan.article_read_limit if plan else self.permission_classes[0].not_plan_user):
+            limited_data = {
+                'title': article.title,
+                'created_at': article.created_at,
+                'updated_at': article.updated_at,
+                'description': article.description[:30] + "..."  # Limit description to 30 characters
+            }
+            return Response(limited_data, status=status.HTTP_403_FORBIDDEN)
+
+        restrict_entry = Restrict.objects.filter(post=article_id, user=user).first()
+        if restrict_entry:
+            data['can_read'] = True
+        else:
+            # Store the user's read article in the Restrict table
+            Restrict.objects.create(post=article_id, user=user, plan=plan)
+            restrict_count += 1  # Increment the count
+            data['can_read'] = True
+
+        serialized_data.append(data)
+
+        return Response(serialized_data, status=status.HTTP_200_OK)

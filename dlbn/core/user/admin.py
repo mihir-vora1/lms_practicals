@@ -1,18 +1,16 @@
 from django.contrib import admin
-from .models import User, Profile, Follow, Follow1
+from .models import User, Follow
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
-    pass
+    list_filter = ('is_active', 'date_joined')
+    list_display = ['id', 'username', 'email', 'email_verified', 'is_active', 'plan', 'date_joined']
+    search_fields = ['username', 'email']
 
-@admin.register(Profile)
-class ProfileAdmin(admin.ModelAdmin):
-    pass
 
 @admin.register(Follow)
 class FollowAdmin(admin.ModelAdmin):
-    pass
+    list_filter = ('follower', 'following')
+    list_display = ['id', 'follower', 'following', 'created_at', 'updated_at']
+    search_fields = ['follower__username', 'following__username']
 
-@admin.register(Follow1)
-class Follow1Admin(admin.ModelAdmin):
-    pass

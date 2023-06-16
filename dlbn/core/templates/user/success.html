@@ -8,9 +8,9 @@
         <div class="card-body">
           <h5 class="card-title">Check Email</h5>
           <p class="card-text ">A new verification email has been sent. Please check your email.</p>
-<!--          <a href="{% url 'login' %}" class="card-link">Login</a>-->
-<p>If you didn't receive the email, you can <a href="{{ resend_verification_link }}">resend the verification email</a>.</p>
-
+            <p>
+                <a href="{% url 'resend_verification' %}">Resend verification email</a>
+            </p>
         </div>
       </div>
     </div>

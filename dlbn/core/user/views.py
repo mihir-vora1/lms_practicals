@@ -1,19 +1,19 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, authenticate, logout
-from .forms import RegistrationForm, LoginForm, ProfileUpdateForm
+
+from .forms import RegistrationForm, LoginForm, ResendVerificationEmailForm
+from .tasks import send_verification_email
+from .serializers import  LoginSerializer, FollowSerializer, UserSerializer
+from .models import Follow, User
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, generics
 from rest_framework_simplejwt.views import TokenObtainPairView
-from rest_framework.permissions import AllowAny
-from .serializers import  LoginSerializer, FollowSerializer, UserSerializer
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.decorators import api_view
 from rest_framework.authtoken.models import Token
-from rest_framework import generics
-from .models import Follow, User
-from rest_framework.permissions import IsAuthenticated
 from django.db.models import Q
-from .tasks import send_verification_email
 from django.contrib.sites.shortcuts import get_current_site
 from django.urls import reverse
 from django.contrib.auth.tokens import default_token_generator
@@ -21,35 +21,33 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.core.exceptions import ValidationError
 from django.utils import timezone
-from django.http import HttpResponse
-
-
-from django.urls import reverse
+from django.contrib import messages
 
 def register(request):
     if request.method == 'POST':
         form = RegistrationForm(request.POST)
         if form.is_valid():
-            user = form.save()
-            login(request, user)
+            email = form.cleaned_data['email']
+            if User.objects.filter(email=email).exists():
+                messages.error(request, 'This email address is already registered.')
+            else:
+                user = form.save()
+                login(request, user)
 
-            # Generate verification token
-            token = default_token_generator.make_token(user)
+                user.save()
 
-            # Generate verification link
-            current_site = get_current_site(request)
-            uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
-            verification_link = reverse('verify_email', kwargs={'uidb64': uidb64, 'token': token})
-            verification_link = f'{current_site.domain}{verification_link}'
+                # Generate verification token
+                token = default_token_generator.make_token(user)
 
-            # Send verification email asynchronously
-            send_verification_email.delay(user.email, verification_link)
+                # Generate verification link
+                current_site = get_current_site(request)
+                uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
+                verification_link = reverse('verify_email', kwargs={'uidb64': uidb64, 'token': token})
+                verification_link = f'{current_site.domain}{verification_link}'
 
-            # Resend verification link
-            resend_verification_link = reverse('resend_verification')
-
-            # The signal will be triggered automatically
-            return render(request, "user/success.html", {'resend_verification_link': resend_verification_link})
+                # Send verification email asynchronously
+                send_verification_email.delay(user.email, verification_link)
+                return render(request, "user/success.html")
     else:
         form = RegistrationForm()
     return render(request, 'user/register.html', {'form': form})
@@ -97,49 +95,36 @@ def verify_email(request, uidb64, token):
         return render(request, "user/invalid.html")
 
 
-from django.contrib.auth.decorators import login_required
 
-def resend_verification(request):
-    user = request.user
-
-    if user.is_authenticated:
-        if not user.email_verified:
-            # Generate verification token
-            token = default_token_generator.make_token(user)
-
-            # Generate verification link
-            current_site = get_current_site(request)
-            uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
-            verification_link = reverse('verify_email', kwargs={'uidb64': uidb64, 'token': token})
-            verification_link = f'{current_site.domain}{verification_link}'
-
-            # Send verification email asynchronously
-            send_verification_email.delay(user.email, verification_link)
-
-            # Return success response or redirect to a success page
-            return HttpResponse("Verification email has been resent.")
-        else:
-            return HttpResponse("Your email is already verified.")
-    else:
-        # Handle the case when the user is not authenticated
-        return HttpResponse("Please log in to resend the verification email.")
-
-
-
-def profile(request):
+def resend_verification_email(request):
     if request.method == 'POST':
-        form = ProfileUpdateForm(request.POST, request.FILES)
+        form = ResendVerificationEmailForm(request.POST)
         if form.is_valid():
-            profile = form.save(commit=False)
-            profile.user = request.user
-            profile.save()
-            return redirect('home')
+            email = form.cleaned_data.get('email')
+            try:
+                user = User.objects.get(email=email)
+                if user.email_verified:
+                    form.add_error(None, 'Your email is already verified.')
+                else:
+                    # Generate verification token
+                    token = default_token_generator.make_token(user)
+
+                    # Generate verification link
+                    current_site = get_current_site(request)
+                    uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
+                    verification_link = reverse('verify_email', kwargs={'uidb64': uidb64, 'token': token})
+                    verification_link = f'{current_site.domain}{verification_link}'
+
+                    # Send verification email asynchronously
+                    send_verification_email.delay(user.email, verification_link)
+                    return render(request, "user/success.html")
+            except User.DoesNotExist:
+                form.add_error('email', 'User with this email address does not exist.')
     else:
-        form = ProfileUpdateForm()
-    return render(request, 'user/profile.html', {'pform': form})
+        form = ResendVerificationEmailForm()
+    return render(request, 'user/resend_verification.html', {'form': form})
 
 def logout_view(request):
-
     logout(request)
     return redirect('login')
 
@@ -176,22 +161,6 @@ class FollowCreateAPIView(generics.ListCreateAPIView, generics.DestroyAPIView):
     def get_queryset(self):
         user = self.request.user
         return Follow.objects.filter(Q(follower=user) | Q(following=user))
-    # def list(self, request, *args, **kwargs):
-    #     queryset = self.get_queryset()
-    #     followers = queryset.filter(following=self.request.user).values('follower', 'follower__username')
-    #     following = queryset.filter(follower=self.request.user).values('following', 'following__username')
-    #
-    #     follower_count = followers.count()
-    #     following_count = following.count()
-    #
-    #     response_data = {
-    #         'followers_count': follower_count,
-    #         'following_count': following_count,
-    #         'followers': list(followers),
-    #         'following': list(following),
-    #     }
-    #
-    #     return Response(response_data)
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
@@ -228,29 +197,3 @@ class FollowCreateAPIView(generics.ListCreateAPIView, generics.DestroyAPIView):
                 return Response({'error': 'You are not following this user.'}, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response({'error': 'No user ID provided to unfollow.'}, status=status.HTTP_400_BAD_REQUEST)
-
-# def resend_verification_email(request):
-#     if request.method == 'GET':
-#         email = request.GET.get('email')
-#
-#         # Check if email is provided
-#         if email:
-#             # Generate verification token
-#             user = User.objects.get(email=email)
-#             token = default_token_generator.make_token(user)
-#
-#             # Generate verification link
-#             current_site = get_current_site(request)
-#             uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
-#             verification_link = reverse('verify_email', kwargs={'uidb64': uidb64, 'token': token})
-#             verification_link = f'{current_site.domain}{verification_link}'
-#
-#             # Send verification email asynchronously
-#             send_verification_email.delay(user.email, verification_link)
-#
-#             # Redirect to success page or display a success message
-#             return render(request, 'user/success.html')
-#
-#     # Handle invalid or missing email
-#     return render(request, 'user/verification_email_invalid.html')
-

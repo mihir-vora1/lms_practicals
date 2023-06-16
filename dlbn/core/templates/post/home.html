@@ -2,8 +2,20 @@
 {% load static %}
 
 {% block content %}
-
-  <body>
+<script src="{% static 'js/alert.js' %}"></script>
+{% if messages %}
+<div id="alert-message" class="alert-message hidden">
+    <ul class="messages">
+      {% for message in messages %}
+        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>
+            <script>
+                showAlert('{{message}}');
+            </script>
+        </li>
+      {% endfor %}
+    </ul>
+</div>
+{% endif %}
     <!-- articles section start -->
     <div class="container mt-5">
         <div class="row">
@@ -81,9 +93,4 @@
              <!-- right side end -->
         </div>
     </div>
-     <!-- articles section end-->
-    
-
-  </body>
-</html>
 {% endblock %}

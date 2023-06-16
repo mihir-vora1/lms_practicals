@@ -17,7 +17,9 @@ class RegistrationForm(UserCreationForm):
 class LoginForm(AuthenticationForm):
     pass
 
-class ProfileUpdateForm(forms.ModelForm):
-    class Meta:
-        model = Profile
-        fields = ['image', 'bio',]
+class ResendVerificationEmailForm(forms.Form):
+    email = forms.EmailField()
+
+    widgets = {
+        'email': forms.TextInput(attrs={'class': 'form-control'}),
+    }

@@ -1,0 +1,16 @@
+<!-- payment_confirmation.html -->
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="row d-flex justify-content-center mt-4">
+        <div class="col-md-4 border p-4">
+            {% if messages %}
+                <ul class="messages">
+                    {% for message in messages %}
+                        <p{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</p>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

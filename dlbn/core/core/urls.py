@@ -12,6 +12,7 @@ urlpatterns = [
 
     path("admin/", admin.site.urls),
     path("", post.home, name="home"),
+    
     # user module
     path("", include("user.urls")),
 
@@ -22,8 +23,7 @@ urlpatterns = [
 
     path('post/', blog_post.create_article, name="create-blog"),
 
-    path('profile/', user.profile, name='profile'),
-
+    path("", include("membership.urls")),
 ]
 
 if settings.DEBUG:

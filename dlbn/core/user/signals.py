@@ -11,7 +11,6 @@ from django.contrib.auth.models import User
 
 @receiver(post_save, sender=User)
 def send_email_on_save(sender, instance, created, **kwargs):
-    print("================================================")
     # Send an email to the user
     subject = 'Welcome to Dalton Application'
     html_message = render_to_string('user/welcome_email.html', {'user': instance})

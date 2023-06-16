@@ -3,79 +3,6 @@
 {% load crispy_forms_tags %}
 
 {% block content %}
-<style>
-  body {
-    font-family: tahoma;
-  }
-
-  ol, ul {
-    list-style: outside none none;
-  }
-
-  #container {
-    margin: 0 auto;
-    width: 60rem;
-  }
-
-  .tags {
-    background: none repeat scroll 0 0 #fff;
-    border: 1px solid #ccc;
-    display: table;
-    padding: 0.5em;
-    width: 100%;
-  }
-
-  .tags li.tagAdd,
-  .tags li.addedTag {
-    float: left;
-    margin-left: 0.25em;
-    margin-right: 0.25em;
-  }
-
-  .tags li.addedTag {
-    background: none repeat scroll 0 0 #019f86;
-    border-radius: 2px;
-    color: #fff;
-    padding: 0.25em;
-  }
-
-  .tags input,
-  li.addedTag {
-    border: 1px solid transparent;
-    border-radius: 2px;
-    box-shadow: none;
-    display: block;
-    padding: 0.5em;
-  }
-
-  .tags input:hover {
-    border: 1px solid #000;
-  }
-
-  span.tagRemove {
-    cursor: pointer;
-    display: inline-block;
-    padding-left: 0.5em;
-  }
-
-  span.tagRemove:hover {
-    color: #222222;
-  }
-
-  p,
-  h1 {
-    text-align: center;
-  }
-
-  p {
-    color: #ccc;
-  }
-
-  h1 {
-    color: #6b6b6b;
-    font-size: 1.5em;
-  }
-</style>
 
 <div class="container mt-4 mb-4">
   <div class="row justify-content-center">
@@ -86,18 +13,7 @@
             {% csrf_token %}
             {{ form.media }}
             {{ form.as_p  }}
-            <ul class="tags">
-              {% for tag in form.tags.value %}
-              <li class="addedTag">
-                {{ tag }}
-                <span class="tagRemove" onclick="$(this).parent().remove();">x</span>
-                <input type="hidden" value="{{ tag }}" name="tags[]">
-              </li>
-              {% endfor %}
-              <li class="tagAdd taglist">
-                <input type="text" id="search-field">
-              </li>
-            </ul>
+            
             <button type="submit" class="btn btn-success">Post</button>
           </form>
         </div>

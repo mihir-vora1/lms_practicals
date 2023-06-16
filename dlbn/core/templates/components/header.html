@@ -1,4 +1,4 @@
-<nav class="navbar navbar-expand-lg navbar-light  bg-light">
+<nav class="navbar navbar-expand-lg navbar-light  bg-light ml-3">
   <a class="navbar-brand" href="#">Dalton</a>
   <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
     <span class="navbar-toggler-icon"></span>
@@ -15,8 +15,15 @@
         <a class="nav-link" href="{% url 'logout'  %}">Logout</a>
       </li>
       <li class="nav-item float-end">
-        <a class="nav-link" href="">{{ request.user.username }}</a>
+        <a class="nav-link" href="{% url 'plan-list' %}">Upgrade To Plus</a>
       </li>
+    </ul>
+
+    <ul class="navbar-nav ml-auto mr-3">
+      <li class="nav-item">
+        <a class="nav-link" href=""><b>Hello, {{ request.user.username }}</b></a>
+      </li>
+
     </ul>
   </div>
 </nav>

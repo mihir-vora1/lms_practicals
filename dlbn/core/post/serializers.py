@@ -1,21 +1,14 @@
 from rest_framework import serializers
 from .models import (
-                        Tag, 
-                        RelatedTopic, 
-                        Categorie, 
-                        Preference, 
-                        Posts, 
-                        Comment, 
-                        CreateBookmarkList, 
-                        Bookmark
-                    )
+    Tag,
+    Categorie,
+    Preference,
+    Posts,
+    Comment,
+    CreateBookmarkList,
+    Bookmark,
+)
 from django.contrib.auth.models import User
-
-class RelatedTopicSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = RelatedTopic
-        fields = ['name']
-
 
 class TagSerializer(serializers.ModelSerializer):
     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
@@ -23,7 +16,7 @@ class TagSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Tag
-        fields = ['id', 'user', 'user_name', 'categories', 'name']
+        fields = ["id", "user", "user_name", "categories", "name"]
 
     def get_user_name(self, obj):
         return obj.user.username
@@ -32,7 +25,7 @@ class TagSerializer(serializers.ModelSerializer):
 class CategoriesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Categorie
-        fields = '__all__'
+        fields = "__all__"
 
     def create(self, validated_data):
         categories = Categorie.objects.create(**validated_data)
@@ -44,70 +37,42 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('id', 'username', 'email')
-
-
-# class CategorySerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = Categorie
-#         fields = ("id", "category") 
-
-
-
-# class PreferenceSerializer(serializers.ModelSerializer):
-#     # user = UserSerializer(read_only=True)
-#     categories = CategorySerializer(many=True, read_only=True)
-    
-#     class Meta:
-#         model = Preference
-#         fields = "__all__"
-
-#     # def create(self, validated_data):
-#     #     categoriess_data = validated_data.pop('categoriess')
-#     #     user = self.context['request'].user
-#     #     preference = Preference.objects.create(user=user, **validated_data)
-#     #     preference.categoriess.set(categoriess_data)
-#     #     return preference
-
+        fields = ("id", "username", "email")
 
 
 class PreferenceSerializer(serializers.ModelSerializer):
-    categories = serializers.PrimaryKeyRelatedField(queryset=Categorie.objects.all(), many=True)
+    categories = serializers.PrimaryKeyRelatedField(
+        queryset=Categorie.objects.all(), many=True
+    )
 
     class Meta:
         model = Preference
-        fields = ['categories']
+        fields = ["categories"]
 
     def create(self, validated_data):
-        user = self.context['request'].user
+        user = self.context["request"].user
         preference, _ = Preference.objects.get_or_create(user=user)
-        preference.categories.set(validated_data['categories'])
+        preference.categories.set(validated_data["categories"])
         return preference
 
 
 class UserPreferenceSerializerTest(serializers.ModelSerializer):
-    categories = serializers.PrimaryKeyRelatedField(many=True, queryset=Categorie.objects.all())
+    categories = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=Categorie.objects.all()
+    )
 
     class Meta:
         model = Preference
         fields = "__all__"
 
-class CategorySerializer(serializers.ModelSerializer):
 
+class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Categorie
-        fields = ['category']
+        fields = ["category"]
 
 
 class ArticleSerializer(serializers.ModelSerializer):
-    # tags = serializers.SerializerMethodField()
-    # categories = serializers.SerializerMethodField()
-
-    # def get_tags(self, article):
-    #     return [{"id": tag.id, "name": tag.name} for tag in article.tags.all()]
-    
-
-    
     tags = serializers.SerializerMethodField()
     user = serializers.CharField(source="user.username")
     categories = CategorySerializer(read_only=True)
@@ -120,12 +85,7 @@ class ArticleSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Posts
-        fields = '__all__'
-
-    # def to_representation(self, instance):
-    #     representation = super().to_representation(instance)
-    #     representation['user'] = instance.user.username
-    #     return representation
+        fields = "__all__"
 
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -133,21 +93,13 @@ class CommentSerializer(serializers.ModelSerializer):
     user_name = serializers.SerializerMethodField()
     replies = serializers.SerializerMethodField()
     parent_comment_id = serializers.IntegerField(write_only=True, required=False)
-    
-    # def get_replies(self, comment):
-    #     replies = comment.replies.all()
-    #     serializer = CommentListSerializer(replies, many=True)
-    #     return serializer.data
-
-
-
 
     def create(self, validated_data):
-        parent_comment_id = validated_data.pop('parent_comment_id', None)
+        parent_comment_id = validated_data.pop("parent_comment_id", None)
         if parent_comment_id:
             try:
                 parent_comment = Comment.objects.get(id=parent_comment_id)
-                validated_data['parent_comment'] = parent_comment
+                validated_data["parent_comment"] = parent_comment
             except Comment.DoesNotExist:
                 pass
         return super().create(validated_data)
@@ -158,17 +110,28 @@ class CommentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Comment
-        fields = ('id', 'post', "user", 'user_name', 'parent_comment', 'parent_comment_id', 'content', 'created_at', 'updated_at', 'replies')
-        read_only_fields = ('id', "user_name", 'post', 'created_at', 'updated_at')
-        
+        fields = (
+            "id",
+            "post",
+            "user",
+            "user_name",
+            "parent_comment",
+            "parent_comment_id",
+            "content",
+            "created_at",
+            "updated_at",
+            "replies",
+        )
+        read_only_fields = ("id", "user_name", "post", "created_at", "updated_at")
+
     def get_user_name(self, obj):
         return obj.user.username
+
 
 class CreateBookmarkListSerializer(serializers.ModelSerializer):
     class Meta:
         model = CreateBookmarkList
-        fields = ['id', 'name', 'description']
-
+        fields = ["id", "name", "description"]
 
 
 class BookmarkSerializer(serializers.ModelSerializer):
@@ -177,7 +140,7 @@ class BookmarkSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Bookmark
-        fields = ['id', 'user', 'user_name', 'bookmark_list', 'posts']
+        fields = ["id", "user", "user_name", "bookmark_list", "posts"]
 
     def get_user_name(self, obj):
         return obj.user.username

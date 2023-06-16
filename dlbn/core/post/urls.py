@@ -9,40 +9,30 @@ urlpatterns = [
     path('<int:post_id>', views.article_detail, name="article_detail"),
     path('tag', views.tag_posts, name="tag_posts"),
     path("category", views.categories_posts, name="category_post"),
-    path("edit/<int:post_id>", views.edit_post, name="edit_post"),
-    path("delete/<int:post_id>", views.delete_post, name="delete_post"),
+    path("edit/<int:post_id>", views.edit_article, name="edit_post"),
+    path("delete/<int:post_id>", views.delete_article, name="delete_post"),
 
-    # Create Main-Tags
-    # path('categories/', views.CategoriesCreateAPIView.as_view(), name='categories_create_api'),
-
-    # Tag
-    path('tags', views.TagCreateAPIView.as_view(), name='sub_tag_create_api'),
-    path('tags/<int:pk>', views.TagCreateAPIView.as_view(), name='sub_tag_create_api'),
 
     # Search Tags
     path('tags/search', views.TagSearchAPIView.as_view(), name='tag_search_api'),
 
     # User Preference 
-    path('preferences', views.UserPreferenceAPIView.as_view(), name='user_preference_api'), # POST
-
+    path('preferences', views.UserPreferenceAPIView.as_view(), name='user_preference_api'),
 
     path('articles/feed', views.ArticleFeedAPIView.as_view(), name='article-feed'),
+    path('articles/feed/<int:pk>', views.ArticleFeedAPIViewRestrict.as_view(), name='article-feed'),
 
     # user comments
     path('<int:post_id>/comments', views.CommentListCreateAPIView.as_view(), name='comment-list'),
-    path('<int:post_id>/comments/<int:id>/update', views.CommentListCreateAPIView.as_view(), name='comment-update'),
     path('<int:post_id>/comments/<int:parent_comment_id>/replies', views.CommentListCreateAPIView.as_view(), name='comment-reply'),
-    path('<int:post_id>/comments/<int:id>/delete', views.CommentListCreateAPIView.as_view(), name='comment-update'),
+    path('<int:post_id>/comments/<int:id>', views.CommentListCreateAPIView.as_view(), name='comment-update-delete'),
 
-    # bookmark
-    # user
+    # bookmark-lists
     path('bookmark-lists', views.BookmarkListAPIView.as_view(), name='bookmark-list-create'),
-    path('bookmark-lists/<int:pk>/update', views.BookmarkListAPIView.as_view(), name='bookmark-update'),
-    path('bookmark-lists/<int:id>/delete', views.BookmarkListAPIView.as_view(), name='bookmark-delete'),
+    path('bookmark-lists/<int:id>', views.BookmarkListAPIView.as_view(), name='bookmark-update-delete'),
 
-    # user
+    # Bookmarks
     path('bookmarks', views.BookmarkCreateRemoveAPIView.as_view(), name='bookmark'),
-    path('bookmarks/<int:id>/update', views.BookmarkCreateRemoveAPIView.as_view(), name='bookmark-update'),
-    path('bookmarks/<int:id>/delete', views.BookmarkCreateRemoveAPIView.as_view(), name='bookmark-delete'),
+    path('bookmarks/<int:id>', views.BookmarkCreateRemoveAPIView.as_view(), name='bookmark-update-delete'),
 
 ]
